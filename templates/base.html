@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titulo %}Herdez SCM{% endblock %} · Herdez SCM</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
+</head>
+<body>
+<div class="contenedor">
+  <aside class="lateral">
+    <a class="marca" href="{{ url_for('panel') }}"><span class="logo">H</span><b>Herdez SCM</b></a>
+    <nav>
+      <a href="{{ url_for('panel') }}" class="{% if request.endpoint == 'panel' %}activo{% endif %}">Panel principal</a>
+      {% for m in menu %}
+        <a href="{{ url_for(m['ruta']) }}" class="{% if request.blueprint == m['clave'] %}activo{% endif %}">{{ m['nombre'] }}</a>
+      {% endfor %}
+    </nav>
+    <div class="rol">
+      Rol activo
+      <b>{{ nombre_rol }}</b>
+      {{ usuario['nombre'] }}<br>
+      <a href="{{ url_for('salir') }}">Cerrar sesión</a>
+    </div>
+  </aside>
+  <main class="principal">
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+      {% for categoria, texto in mensajes %}
+        <div class="mensaje {{ categoria }}">{{ texto }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block contenido %}{% endblock %}
+  </main>
+</div>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

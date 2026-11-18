@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block titulo %}Reportes e indicadores{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <div>
+    <h1>Reportes e indicadores</h1>
+    <p class="subtitulo">Periodo del {{ desde | fecha }} al {{ hasta | fecha }}</p>
+  </div>
+  <form method="get" class="formulario no-imprimir">
+    <div class="campo"><label>Desde</label><input type="date" name="desde" value="{{ desde }}"></div>
+    <div class="campo"><label>Hasta</label><input type="date" name="hasta" value="{{ hasta }}"></div>
+    <button class="boton secundario">Actualizar</button>
+  </form>
+</div>
+
+<div class="indicadores">
+  {% for i in indicadores %}
+  <div class="indicador">
+    <small>{{ i['nombre'] }}</small>
+    <div class="valor">{{ i['valor'] }}</div>
+    <div class="barra"><div style="width: {{ i['barra'] }}%"></div></div>
+    <p class="subtitulo" style="margin:8px 0">{{ i['detalle'] }}</p>
+    <span class="{{ i['nivel'] | clase_estado }}">{{ i['nivel'] }}</span>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="fila">
+  <div class="tarjeta">
+    <h2>Tiempo promedio de entrega por destino</h2>
+    <table>
+      {% for t in tiempos %}
+      <tr>
+        <td style="width:35%">{{ t['destino'] }}</td>
+        <td><div class="barra"><div style="width: {{ t['ancho'] }}%"></div></div></td>
+        <td class="derecha" style="width:90px">{{ t['dias'] | numero }} {% if t['dias'] == 1 %}día{% else %}días{% endif %}</td>
+      </tr>
+      {% else %}
+      <tr><td class="vacio">No hubo entregas en el periodo.</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  <div class="tarjeta no-imprimir">
+    <h2>Descargar reporte</h2>
+    <a class="boton" href="{{ url_for('reportes.excel', desde=desde, hasta=hasta) }}">Excel</a>
+    <a class="boton secundario" href="{{ url_for('reportes.inicio', desde=desde, hasta=hasta, imprimir=1) }}" target="_blank">PDF</a>
+  </div>
+</div>
+
+<div class="tarjeta">
+  <h2>Pedidos del periodo</h2>
+  <table>
+    <tr><th>Pedido</th><th>Cliente</th><th>Registro</th><th>Requerido</th><th>Entrega</th><th>Estado</th></tr>
+    {% for p in pedidos %}
+    <tr><td>{{ folio('PED', p['id']) }}</td><td>{{ p['cliente'] }}</td><td>{{ p['fecha_registro'] | fecha }}</td><td>{{ p['fecha_requerida'] | fecha }}</td>
+      <td>{{ p['fecha_entrega'] | fecha }}</td><td><span class="{{ p['estado'] | clase_estado }}">{{ p['estado'] }}</span></td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="tarjeta">
+  <h2>Lotes por caducar</h2>
+  <table>
+    <tr><th>Lote</th><th>Artículo</th><th>Caducidad</th><th class="derecha">Existencia</th></tr>
+    {% for l in por_caducar %}
+    <tr><td>{{ l['numero_lote'] }}</td><td>{{ l['articulo'] }}</td><td>{{ l['fecha_caducidad'] | fecha }}</td><td class="derecha">{{ l['cantidad'] | numero }} {{ l['unidad'] }}</td></tr>
+    {% else %}
+    <tr><td colspan="4" class="vacio">Ningún lote está por caducar.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}
+{% block scripts %}
+{% if imprimir %}<script>window.onload = function () { window.print(); };</script>{% endif %}
+{% endblock %}

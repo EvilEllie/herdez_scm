@@ -1,0 +1,45 @@
+{% extends 'almacen/base_tableta.html' %}
+{% block contenido %}
+<div class="encabezado"><div><h1>Recepción de materiales</h1></div></div>
+
+{% if solicitudes %}
+<div class="tarjeta">
+  <h2>Solicitudes de reabastecimiento pendientes</h2>
+  <table>
+    {% for s in solicitudes %}
+    <tr><td>{{ folio('SOL', s['id']) }}</td><td>{{ s['nombre'] }}</td><td class="derecha">{{ s['cantidad'] | numero }} {{ s['unidad'] }}</td><td>{{ s['fecha'] | fecha }}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if puede('almacen', 'registrar') %}
+<div class="tarjeta">
+  <h2>Registrar recepción</h2>
+  <form method="post" class="formulario">
+    <div class="campo"><label>Artículo</label>
+      <select name="articulo_id" required><option value="">Selecciona…</option>
+        {% for a in articulos %}<option value="{{ a['id'] }}">{{ a['codigo'] }} · {{ a['nombre'] }} ({{ a['unidad'] }})</option>{% endfor %}
+      </select></div>
+    <div class="campo"><label>Proveedor</label>
+      <select name="proveedor_id" required><option value="">Selecciona…</option>
+        {% for p in proveedores %}<option value="{{ p['id'] }}">{{ p['nombre'] }}</option>{% endfor %}
+      </select></div>
+    <div class="campo"><label>Cantidad</label><input type="number" name="cantidad" min="1" step="0.01" required style="width:120px"></div>
+    <div class="campo"><label>Caducidad</label><input type="date" name="fecha_caducidad" min="{{ minimo }}" required></div>
+    <div class="campo"><label>Ubicación</label><input name="ubicacion" placeholder="Ej. R-05" required style="width:110px"></div>
+    <button class="boton">Registrar entrada</button>
+  </form>
+</div>
+{% endif %}
+
+<div class="tarjeta">
+  <h2>Últimas entradas</h2>
+  <table>
+    <tr><th>Fecha</th><th>Lote</th><th>Artículo</th><th>Proveedor</th><th>Ubicación</th><th class="derecha">Cantidad</th></tr>
+    {% for e in entradas %}
+    <tr><td>{{ e['fecha'] | fecha }}</td><td>{{ e['numero_lote'] }}</td><td>{{ e['nombre'] }}</td><td>{{ e['proveedor'] or '—' }}</td><td>{{ e['ubicacion'] }}</td><td class="derecha">{{ e['cantidad'] | numero }} {{ e['unidad'] }}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

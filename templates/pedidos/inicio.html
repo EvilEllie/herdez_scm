@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block titulo %}Pedidos{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <div>
+    <h1>Pedidos</h1>
+  </div>
+</div>
+
+{% if puede('pedidos', 'registrar') %}
+<div class="tarjeta">
+  <h2>Nuevo pedido</h2>
+  <form method="post" action="{{ url_for('pedidos.nuevo') }}">
+    <div class="formulario" style="margin-bottom:14px">
+      <div class="campo"><label>Cliente</label>
+        <select name="cliente_id" required>
+          <option value="">Selecciona…</option>
+          {% for c in clientes %}<option value="{{ c['id'] }}">{{ c['nombre'] }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="campo"><label>Fecha requerida</label><input type="date" name="fecha_requerida" min="{{ hoy }}" required></div>
+    </div>
+    <table id="tabla-productos">
+      <tr><th style="width:45%">Producto</th><th style="width:20%">Cantidad (cajas)</th><th>Disponible</th></tr>
+      <tr class="renglon-producto">
+        <td><select name="producto_id" onchange="actualizarDisponible(this)">
+          <option value="">Selecciona…</option>
+          {% for p in productos %}<option value="{{ p['id'] }}">{{ p['codigo'] }} · {{ p['nombre'] }}</option>{% endfor %}
+        </select></td>
+        <td><input type="number" name="cantidad" min="1" step="1" oninput="actualizarDisponible(this)"></td>
+        <td class="celda-disponible"><span class="etiqueta gris">Sin seleccionar</span></td>
+      </tr>
+    </table>
+    <p style="margin:10px 0 14px"><a href="#" onclick="agregarRenglon(); return false;">+ Agregar producto</a></p>
+    <button class="boton" type="submit">Guardar pedido</button>
+  </form>
+</div>
+{% endif %}
+
+<div class="tarjeta">
+  <div class="encabezado" style="margin-bottom:8px">
+    <h2 style="margin:0">Pedidos registrados</h2>
+    <form method="get" class="formulario">
+      <select name="estado" onchange="this.form.submit()">
+        <option value="">Todos los estados</option>
+        {% for e in estados %}<option value="{{ e }}" {% if e == estado %}selected{% endif %}>{{ e }}</option>{% endfor %}
+      </select>
+    </form>
+  </div>
+  <table>
+    <tr><th>Pedido</th><th>Cliente</th><th>Registro</th><th>Requerido</th><th class="derecha">Cajas</th><th>Estado</th><th></th></tr>
+    {% for p in pedidos %}
+    <tr>
+      <td><b>{{ folio('PED', p['id']) }}</b></td>
+      <td>{{ p['cliente'] }}</td>
+      <td>{{ p['fecha_registro'] | fecha }}</td>
+      <td>{{ p['fecha_requerida'] | fecha }}</td>
+      <td class="derecha">{{ p['cajas'] | numero }}</td>
+      <td><span class="{{ p['estado'] | clase_estado }}">{{ p['estado'] }}</span></td>
+      <td class="derecha"><a class="boton secundario chico" href="{{ url_for('pedidos.detalle', pedido_id=p['id']) }}">Ver</a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="vacio">No hay pedidos con ese estado.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  var disponibles = {{ disponibles | tojson }};
+</script>
+{% endblock %}

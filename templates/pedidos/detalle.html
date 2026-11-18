@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block titulo %}{{ folio('PED', pedido['id']) }}{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <div>
+    <h1>Pedido {{ folio('PED', pedido['id']) }}</h1>
+    <p class="subtitulo">{{ pedido['cliente'] }} · {{ pedido['direccion'] }}</p>
+  </div>
+  <a class="boton secundario" href="{{ url_for('pedidos.inicio') }}">Regresar a pedidos</a>
+</div>
+
+<div class="tarjeta">
+  <h2>Estado del pedido</h2>
+  <div class="fila" style="gap:8px">
+    {% set actual = pasos.index(pedido['estado']) if pedido['estado'] in pasos else 0 %}
+    {% for paso in pasos %}
+      {% if loop.index0 <= actual %}
+        <span class="etiqueta verde">{{ paso }}</span>
+      {% else %}
+        <span class="etiqueta gris">{{ paso }}</span>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <p class="subtitulo" style="margin-top:12px">Registrado el {{ pedido['fecha_registro'] | fecha }} por {{ pedido['registro'] or '—' }} · Requerido para el {{ pedido['fecha_requerida'] | fecha }}</p>
+</div>
+
+<div class="fila">
+  <div class="tarjeta">
+    <h2>Productos</h2>
+    <table>
+      <tr><th>Código</th><th>Producto</th><th class="derecha">Cajas</th><th>Existencia hoy</th></tr>
+      {% for l in lineas %}
+      <tr>
+        <td>{{ l['codigo'] }}</td><td>{{ l['nombre'] }}</td><td class="derecha">{{ l['cantidad'] | numero }}</td>
+        <td>
+          {% if pedido['estado'] in ['Registrado', 'En preparación'] %}
+            {% if l['disponible'] >= l['cantidad'] %}<span class="etiqueta verde">Alcanza ({{ l['disponible'] | numero }})</span>
+            {% else %}<span class="etiqueta roja">Faltan {{ (l['cantidad'] - l['disponible']) | numero }} cajas</span>{% endif %}
+          {% else %}<span class="etiqueta gris">Ya surtido</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+  <div class="tarjeta">
+    <h2>Lotes surtidos y envío</h2>
+    {% if salidas %}
+    <table>
+      <tr><th>Lote</th><th>Producto</th><th>Caducidad</th><th class="derecha">Cajas</th></tr>
+      {% for s in salidas %}
+      <tr><td>{{ s['numero_lote'] }}</td><td>{{ s['nombre'] }}</td><td>{{ s['fecha_caducidad'] | fecha }}</td><td class="derecha">{{ s['cantidad'] | numero }}</td></tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <p class="vacio">Todavía no se surte en almacén.</p>
+    {% endif %}
+    {% if envio %}
+    <p style="margin-top:12px"><b>Envío {{ folio('ENV', envio['id']) }}</b> · {{ envio['ruta'] }} → {{ envio['destino'] }} ·
+      Salida {{ envio['fecha_salida'] | fecha }} · <span class="{{ envio['estado'] | clase_estado }}">{{ envio['estado'] }}</span>
+      {% if envio['fecha_entrega'] %} · Entregado el {{ envio['fecha_entrega'] | fecha }}{% endif %}</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

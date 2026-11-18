@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block titulo %}Panel principal{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <div>
+    <h1>Hola, {{ usuario['nombre'].split(' ')[0] }}</h1>
+    <p class="subtitulo">{{ nombre_rol }}</p>
+  </div>
+</div>
+
+<div class="accesos">
+  {% for m in menu %}
+  <div class="acceso">
+    <b>{{ m['nombre'] }}</b>
+    <a class="boton chico" href="{{ url_for(m['ruta']) }}">Abrir</a>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="tarjeta">
+  <h2>Alertas pendientes</h2>
+  <table>
+    <tr><th>Tipo</th><th>Artículo o registro</th><th>Detalle</th><th></th></tr>
+    {% for a in alertas %}
+    <tr>
+      <td><span class="{{ a['tipo'] | clase_estado }}">{{ a['tipo'] }}</span></td>
+      <td>{{ a['texto'] }}</td>
+      <td>{{ a['detalle'] }}</td>
+      <td class="derecha">
+        {% if a['enlace'] %}<a class="boton secundario chico" href="{{ a['enlace'] }}">Ver</a>{% endif %}
+        {% if a['aviso_id'] %}
+        <form class="en-linea" method="post" action="{{ url_for('atender_aviso', aviso_id=a['aviso_id']) }}"><button class="boton secundario chico">Marcar atendido</button></form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="vacio">Sin alertas.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

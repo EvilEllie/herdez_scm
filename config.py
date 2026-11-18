@@ -1,0 +1,17 @@
+MOTOR = 'mysql'
+
+MYSQL_HOST = 'localhost'
+MYSQL_PUERTO = 3306
+MYSQL_USUARIO = 'root'
+MYSQL_CONTRASENA = '123'
+MYSQL_BASE = 'herdez_scm'
+
+ARCHIVO_SQLITE = 'herdez_scm.db'
+
+CLAVE_SECRETA = 'herdez-scm-prototipo-2026'
+
+DIAS_POR_CADUCAR = 30
+DIAS_POR_CADUCAR_MP = 5
+
+INTENTOS_MAXIMOS = 5
+MINUTOS_BLOQUEO = 15

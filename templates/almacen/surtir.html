@@ -1,0 +1,52 @@
+{% extends 'almacen/base_tableta.html' %}
+{% block contenido %}
+<div class="encabezado">
+  <div><h1>Surtido del pedido {{ folio('PED', pedido['id']) }}</h1><p class="subtitulo">{{ pedido['cliente'] }} · Requerido el {{ pedido['fecha_requerida'] | fecha }}</p></div>
+  <a class="boton secundario" href="{{ url_for('almacen.surtido') }}">Otros pedidos</a>
+</div>
+
+{% if puede('almacen', 'registrar') %}
+<div class="tarjeta">
+  <form method="post" action="{{ url_for('almacen.escanear', pedido_id=pedido['id']) }}" class="formulario">
+    <div class="campo" style="flex:1"><label>Lote</label><input name="codigo" placeholder="Ej. L251020-01" autofocus autocomplete="off"></div>
+    <button class="boton secundario">Confirmar lote</button>
+  </form>
+</div>
+{% endif %}
+
+{% if faltantes %}
+<div class="mensaje error">
+  No hay existencia liberada suficiente:
+  {% for f in faltantes %}faltan {{ f['cantidad'] | numero }} cajas de {{ f['producto'] }}{% if not loop.last %}, {% endif %}{% endfor %}.
+  Espera a que Producción y Calidad liberen el lote.
+</div>
+{% endif %}
+
+<div class="tarjeta">
+  <h2>Lotes a surtir (FEFO)</h2>
+  <table>
+    <tr><th>Producto</th><th>Lote</th><th>Ubicación</th><th>Caducidad</th><th class="derecha">Cajas</th><th></th></tr>
+    {% for r in renglones %}
+    <tr>
+      <td>{{ r['producto'] }}</td><td><b>{{ r['numero_lote'] }}</b></td><td>{{ r['ubicacion'] }}</td><td>{{ r['caducidad'] | fecha }}</td>
+      <td class="derecha">{{ r['cantidad'] | numero }}</td>
+      <td class="derecha">
+        {% if r['confirmado'] %}<span class="etiqueta verde">Confirmado</span>
+        {% elif puede('almacen', 'registrar') %}
+        <form class="en-linea" method="post" action="{{ url_for('almacen.confirmar', pedido_id=pedido['id']) }}">
+          <input type="hidden" name="clave" value="{{ r['clave'] }}"><button class="boton">Confirmar</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="vacio">No hay lotes disponibles para este pedido.</td></tr>
+    {% endfor %}
+  </table>
+  {% if puede('almacen', 'registrar') %}
+  <form method="post" action="{{ url_for('almacen.registrar_salida', pedido_id=pedido['id']) }}" style="margin-top:16px;text-align:right">
+    <button class="boton" {% if not completo %}disabled{% endif %}>Registrar salida del pedido</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

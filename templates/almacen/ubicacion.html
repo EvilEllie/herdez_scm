@@ -1,0 +1,38 @@
+{% extends 'almacen/base_tableta.html' %}
+{% block contenido %}
+<div class="encabezado"><div><h1>Ubicación de producto terminado</h1></div></div>
+
+<div class="tarjeta">
+  <h2>Lotes por ubicar</h2>
+  <table>
+    <tr><th>Lote</th><th>Producto</th><th class="derecha">Cajas</th><th>Caducidad</th><th>Nueva ubicación</th></tr>
+    {% for l in por_ubicar %}
+    <tr>
+      <td><b>{{ l['numero_lote'] }}</b></td><td>{{ l['nombre'] }}</td><td class="derecha">{{ l['cantidad'] | numero }}</td><td>{{ l['fecha_caducidad'] | fecha }}</td>
+      <td>
+        {% if puede('almacen', 'registrar') %}
+        <form method="post" class="formulario">
+          <input type="hidden" name="lote_id" value="{{ l['id'] }}">
+          <input name="ubicacion" placeholder="Ej. A-01-04" required style="width:130px">
+          <button class="boton">Guardar</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="vacio">No hay lotes por ubicar.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="tarjeta">
+  <h2>En espera de inspección de calidad</h2>
+  <table>
+    {% for l in en_espera %}
+    <tr><td>{{ l['numero_lote'] }}</td><td>{{ l['nombre'] }}</td><td class="derecha">{{ l['cantidad'] | numero }} cajas</td><td><span class="etiqueta amarilla">Pendiente de inspección</span></td></tr>
+    {% else %}
+    <tr><td class="vacio">No hay lotes en espera.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

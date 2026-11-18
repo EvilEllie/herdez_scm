@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block titulo %}Órdenes de producción{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <div>
+    <h1>Órdenes de producción</h1>
+  </div>
+</div>
+
+{% if avisos %}
+<div class="tarjeta">
+  <h2>Avisos de Ventas</h2>
+  <table>
+    {% for a in avisos %}
+    <tr>
+      <td><span class="etiqueta roja">{{ a['tipo'] }}</span></td>
+      <td>{{ a['mensaje'] }}</td>
+      <td class="derecha"><a class="boton secundario chico" href="{{ url_for('produccion.inicio', pedido_id=a['pedido_id']) }}">Crear orden</a></td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if puede('produccion', 'registrar') %}
+<div class="tarjeta">
+  <h2>Nueva orden</h2>
+  <form method="post" class="formulario">
+    <div class="campo"><label>Producto</label>
+      <select name="producto_id" required>
+        <option value="">Selecciona…</option>
+        {% for p in productos %}<option value="{{ p['id'] }}" {% if formulario['producto_id'] == p['id'] | string %}selected{% endif %}>{{ p['codigo'] }} · {{ p['nombre'] }}</option>{% endfor %}
+      </select></div>
+    <div class="campo"><label>Cantidad (cajas)</label><input type="number" name="cantidad" min="1" value="{{ formulario['cantidad'] }}" required style="width:120px"></div>
+    <div class="campo"><label>Pedido de origen (opcional)</label>
+      <select name="pedido_id">
+        <option value="">Necesidad de inventario</option>
+        {% for p in pedidos %}<option value="{{ p['id'] }}" {% if formulario['pedido_id'] == p['id'] | string %}selected{% endif %}>{{ folio('PED', p['id']) }} · {{ p['cliente'] }}</option>{% endfor %}
+      </select></div>
+    <div class="campo"><label>Fecha programada</label><input type="date" name="fecha" value="{{ formulario['fecha'] }}"></div>
+    <button class="boton secundario" formaction="{{ url_for('produccion.verificar') }}">Verificar materiales</button>
+    <button class="boton" formaction="{{ url_for('produccion.nueva') }}">Crear orden</button>
+  </form>
+
+  {% if verificacion %}
+  <table style="margin-top:14px">
+    <tr><th>Material</th><th class="derecha">Necesario</th><th class="derecha">Disponible</th><th>Resultado</th></tr>
+    {% for v in verificacion %}
+    <tr>
+      <td>{{ v['nombre'] }} <span class="subtitulo">{{ v['codigo'] }}</span></td>
+      <td class="derecha">{{ v['necesario'] | numero }} {{ v['unidad'] }}</td>
+      <td class="derecha">{{ v['disponible'] | numero }} {{ v['unidad'] }}</td>
+      <td>{% if v['alcanza'] %}<span class="etiqueta verde">Alcanza</span>{% else %}<span class="etiqueta roja">Faltan {{ v['faltante'] | numero }} {{ v['unidad'] }}</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="tarjeta">
+  <h2>Órdenes</h2>
+  <table>
+    <tr><th>Orden</th><th>Producto</th><th class="derecha">Planeado</th><th class="derecha">Producido</th><th>Pedido</th><th>Programada</th><th>Lote</th><th>Estado</th><th></th></tr>
+    {% for o in ordenes %}
+    <tr>
+      <td><b>{{ folio('OP', o['id']) }}</b></td>
+      <td>{{ o['producto'] }}</td>
+      <td class="derecha">{{ o['cantidad_planeada'] | numero }}</td>
+      <td class="derecha">{{ o['cantidad_producida'] | numero }}</td>
+      <td>{% if o['pedido_id'] %}{{ folio('PED', o['pedido_id']) }}{% else %}—{% endif %}</td>
+      <td>{{ o['fecha_programada'] | fecha }}</td>
+      <td>{{ o['numero_lote'] or '—' }}</td>
+      <td><span class="{{ o['estado'] | clase_estado }}">{{ o['estado'] }}</span>
+        {% if o['estado'] != 'Terminada' and not o['alcanza'] %}<br><span class="etiqueta roja" style="margin-top:4px">Faltan materiales</span>{% endif %}</td>
+      <td class="derecha">
+        {% if puede('produccion', 'registrar') %}
+          {% if o['estado'] == 'Programada' %}
+            <form class="en-linea" method="post" action="{{ url_for('produccion.iniciar', orden_id=o['id']) }}"><button class="boton secundario chico">Iniciar</button></form>
+          {% elif o['estado'] == 'En proceso' %}
+            <form class="formulario" method="post" action="{{ url_for('produccion.registrar', orden_id=o['id']) }}" style="justify-content:flex-end">
+              <input type="number" name="cantidad_producida" min="1" value="{{ o['cantidad_planeada'] | int }}" style="width:90px;min-width:80px">
+              <button class="boton chico">Registrar producción</button>
+            </form>
+          {% endif %}
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

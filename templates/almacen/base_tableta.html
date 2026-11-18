@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Almacén · Herdez SCM</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
+</head>
+<body class="tableta">
+<div class="barra-superior">
+  <a class="marca" href="{{ url_for('panel') }}"><span class="logo">H</span><b>Almacén</b></a>
+  <div class="pestanas">
+    <a href="{{ url_for('almacen.recepcion') }}" class="{% if pestana == 'recepcion' %}activo{% endif %}">Recepción</a>
+    <a href="{{ url_for('almacen.ubicacion') }}" class="{% if pestana == 'ubicacion' %}activo{% endif %}">Ubicación</a>
+    <a href="{{ url_for('almacen.surtido') }}" class="{% if pestana == 'surtido' %}activo{% endif %}">Surtido</a>
+  </div>
+  <div class="quien">{{ nombre_rol }}<br><a href="{{ url_for('panel') }}">Panel</a> · <a href="{{ url_for('salir') }}">Salir</a></div>
+</div>
+<main class="principal">
+  {% with mensajes = get_flashed_messages(with_categories=true) %}
+    {% for categoria, texto in mensajes %}<div class="mensaje {{ categoria }}">{{ texto }}</div>{% endfor %}
+  {% endwith %}
+  {% block contenido %}{% endblock %}
+</main>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block titulo %}Inspección de calidad{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <div>
+    <h1>Inspección de calidad</h1>
+  </div>
+</div>
+
+<div class="tarjeta">
+  <h2>Lotes pendientes de inspección</h2>
+  <table>
+    <tr><th>Lote</th><th>Producto</th><th>Orden</th><th class="derecha">Cajas</th><th>Producción</th><th>Estado</th><th style="width:40%">Resultado</th></tr>
+    {% for l in pendientes %}
+    <tr>
+      <td><b>{{ l['numero_lote'] }}</b></td>
+      <td>{{ l['producto'] }}</td>
+      <td>{% if l['orden'] %}{{ folio('OP', l['orden']) }}{% else %}—{% endif %}</td>
+      <td class="derecha">{{ l['cantidad'] | numero }}</td>
+      <td>{{ l['fecha_entrada'] | fecha }}</td>
+      <td><span class="{{ l['estado_calidad'] | clase_estado }}">{{ l['estado_calidad'] }}</span></td>
+      <td>
+        {% if puede('calidad', 'registrar') %}
+        <form method="post" action="{{ url_for('calidad.inspeccionar', lote_id=l['id']) }}" class="formulario">
+          <input name="observaciones" placeholder="Observaciones" style="flex:1">
+          <button class="boton chico" name="resultado" value="Liberado">Liberar</button>
+          <button class="boton amarillo chico" name="resultado" value="Retenido">Retener</button>
+          <button class="boton peligro chico" name="resultado" value="Rechazado">Rechazar</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="vacio">No hay lotes pendientes.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="tarjeta">
+  <h2>Inspecciones recientes</h2>
+  <table>
+    <tr><th>Fecha</th><th>Lote</th><th>Producto</th><th>Resultado</th><th>Observaciones</th><th>Responsable</th></tr>
+    {% for i in inspecciones %}
+    <tr><td>{{ i['fecha'] | fecha }}</td><td>{{ i['numero_lote'] }}</td><td>{{ i['producto'] }}</td>
+      <td><span class="{{ i['resultado'] | clase_estado }}">{{ i['resultado'] }}</span></td><td>{{ i['observaciones'] }}</td><td>{{ i['responsable'] }}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

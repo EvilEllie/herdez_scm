@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block titulo %}Envíos{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <div>
+    <h1>Envíos</h1>
+  </div>
+</div>
+
+{% if puede('logistica', 'registrar') %}
+<div class="tarjeta">
+  <h2>Nueva orden de envío</h2>
+  {% if surtidos %}
+  <form method="get" class="formulario" style="margin-bottom:12px">
+    <div class="campo"><label>Pedido surtido</label>
+      <select name="pedido_id" onchange="this.form.submit()">
+        <option value="">Selecciona…</option>
+        {% for s in surtidos %}<option value="{{ s['id'] }}" {% if elegido == s['id'] | string %}selected{% endif %}>{{ folio('PED', s['id']) }} · {{ s['cliente'] }}</option>{% endfor %}
+      </select></div>
+  </form>
+  {% if elegido %}
+  <form method="post" action="{{ url_for('logistica.nuevo') }}" class="formulario">
+    <input type="hidden" name="pedido_id" value="{{ elegido }}">
+    <div class="campo"><label>Ruta</label>
+      <select name="ruta_id" required><option value="">Selecciona…</option>
+        {% for r in rutas %}<option value="{{ r['id'] }}">{{ r['nombre'] }} ({{ r['destinos'] }})</option>{% endfor %}
+      </select></div>
+    <div class="campo"><label>Destino</label><input name="destino" value="{{ destino }}" required style="width:220px"></div>
+    <div class="campo"><label>Fecha de salida</label><input type="date" name="fecha_salida" value="{{ hoy }}" min="{{ hoy }}" required></div>
+    <button class="boton">Programar</button>
+  </form>
+  {% endif %}
+  {% else %}
+  <p class="vacio">No hay pedidos surtidos esperando envío.</p>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="tarjeta">
+  <h2>Seguimiento de envíos</h2>
+  <table>
+    <tr><th>Envío</th><th>Pedido</th><th>Cliente</th><th>Ruta</th><th>Destino</th><th>Salida</th><th>Entrega</th><th>Estado</th><th></th></tr>
+    {% for e in envios %}
+    <tr>
+      <td><b>{{ folio('ENV', e['id']) }}</b></td><td>{{ folio('PED', e['pedido_id']) }}</td><td>{{ e['cliente'] }}</td><td>{{ e['ruta'] }}</td><td>{{ e['destino'] }}</td>
+      <td>{{ e['fecha_salida'] | fecha }}</td><td>{{ e['fecha_entrega'] | fecha }}</td>
+      <td><span class="{{ e['estado'] | clase_estado }}">{{ e['estado'] }}</span></td>
+      <td class="derecha">
+        {% if puede('logistica', 'registrar') %}
+          {% if e['estado'] == 'Programado' %}
+          <form class="en-linea" method="post" action="{{ url_for('logistica.cambiar_estado', envio_id=e['id']) }}"><input type="hidden" name="estado" value="En tránsito"><button class="boton secundario chico">Salió · En tránsito</button></form>
+          {% elif e['estado'] == 'En tránsito' %}
+          <form class="en-linea" method="post" action="{{ url_for('logistica.cambiar_estado', envio_id=e['id']) }}"><input type="hidden" name="estado" value="Entregado"><button class="boton chico">Marcar entregado</button></form>
+          {% endif %}
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="9" class="vacio">No hay envíos.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="tarjeta">
+  <h2>Rastreo de lote</h2>
+  <form method="get" class="formulario" style="margin-bottom:12px">
+    <div class="campo"><label>Número de lote</label><input name="lote" value="{{ lote_buscado }}" placeholder="Ej. L251020-01"></div>
+    <button class="boton secundario">Buscar</button>
+  </form>
+  {% if lote_buscado %}
+    {% if lote is none %}
+    <p class="vacio">No existe el lote {{ lote_buscado }}.</p>
+    {% else %}
+    <p style="margin-bottom:10px"><b>{{ lote['numero_lote'] }}</b> · {{ lote['nombre'] }} · Caduca el {{ lote['fecha_caducidad'] | fecha }} · <span class="{{ lote['estado_calidad'] | clase_estado }}">{{ lote['estado_calidad'] }}</span></p>
+    <table>
+      <tr><th>Fecha de salida</th><th>Pedido</th><th>Cliente</th><th>Destino</th><th>Ruta</th><th class="derecha">Cajas</th><th>Estado del envío</th></tr>
+      {% for r in rastreo %}
+      <tr><td>{{ r['fecha'] | fecha }}</td><td>{{ folio('PED', r['pedido_id']) }}</td><td>{{ r['cliente'] }}</td><td>{{ r['destino'] or 'Sin envío aún' }}</td><td>{{ r['ruta'] or '—' }}</td>
+        <td class="derecha">{{ r['cantidad'] | numero }}</td><td>{% if r['estado'] %}<span class="{{ r['estado'] | clase_estado }}">{{ r['estado'] }}</span>{% else %}—{% endif %}</td></tr>
+      {% else %}
+      <tr><td colspan="7" class="vacio">Este lote todavía no ha salido del almacén.</td></tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

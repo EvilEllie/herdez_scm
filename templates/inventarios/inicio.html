@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block titulo %}Existencias{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <div>
+    <h1>Existencias</h1>
+  </div>
+  {% if puede('inventarios', 'registrar') %}<a class="boton" href="#minimos">Solicitar reabastecimiento</a>{% endif %}
+</div>
+
+<div class="tarjeta">
+  <form method="get" class="formulario" style="margin-bottom:12px">
+    <div class="campo"><label>Tipo de artículo</label>
+      <select name="tipo"><option value="">Todos</option>
+        {% for t in tipos %}<option {% if t == tipo %}selected{% endif %}>{{ t }}</option>{% endfor %}
+      </select></div>
+    <div class="campo"><label>Estado</label>
+      <select name="estado"><option value="">Todos</option>
+        {% for e in estados %}<option {% if e == estado %}selected{% endif %}>{{ e }}</option>{% endfor %}
+      </select></div>
+    <div class="campo"><label>Buscar artículo o lote</label><input name="buscar" value="{{ buscar }}" placeholder="Ej. jalapeño o L2510"></div>
+    <button class="boton secundario" type="submit">Filtrar</button>
+    {% if tipo or estado or buscar %}<a class="boton secundario" href="{{ url_for('inventarios.inicio') }}">Quitar filtros</a>{% endif %}
+  </form>
+  <table>
+    <tr><th>Artículo</th><th>Lote</th><th>Ubicación</th><th>Caducidad</th><th class="derecha">Existencia</th><th class="derecha">Mínimo</th><th>Estado</th></tr>
+    {% for l in lotes %}
+    <tr>
+      <td><b>{{ l['articulo'] }}</b><br><span class="subtitulo">{{ l['codigo'] }} · {{ l['tipo'] }}</span></td>
+      <td>{{ l['numero_lote'] }}</td>
+      <td>{{ l['ubicacion'] }}</td>
+      <td>{{ l['fecha_caducidad'] | fecha }}</td>
+      <td class="derecha">{{ l['cantidad'] | numero }} {{ l['unidad'] }}</td>
+      <td class="derecha">{{ l['nivel_minimo'] | numero }}</td>
+      <td><span class="{{ l['estado'] | clase_estado }}">{{ l['estado'] }}</span></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="vacio">No hay lotes con esos filtros.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="tarjeta" id="minimos">
+  <h2>Niveles mínimos y reabastecimiento</h2>
+  <table>
+    <tr><th>Artículo</th><th>Tipo</th><th class="derecha">Existencia liberada</th><th>Nivel mínimo</th><th>Estado</th><th>Reabastecer</th></tr>
+    {% for a in articulos %}
+    <tr>
+      <td><b>{{ a['nombre'] }}</b><br><span class="subtitulo">{{ a['codigo'] }}</span></td>
+      <td>{{ a['tipo'] }}</td>
+      <td class="derecha">{{ a['existencia'] | numero }} {{ a['unidad'] }}</td>
+      <td>
+        {% if puede('inventarios', 'registrar') %}
+        <form class="formulario" method="post" action="{{ url_for('inventarios.cambiar_minimo', articulo_id=a['id']) }}">
+          <input type="number" name="nivel_minimo" value="{{ a['nivel_minimo'] | int }}" min="0" style="width:100px;min-width:90px">
+          <button class="boton secundario chico">Guardar</button>
+        </form>
+        {% else %}{{ a['nivel_minimo'] | numero }}{% endif %}
+      </td>
+      <td>{% if a['bajo'] %}<span class="etiqueta roja">Bajo el mínimo</span>{% else %}<span class="etiqueta verde">Normal</span>{% endif %}</td>
+      <td>
+        {% if puede('inventarios', 'registrar') and a['tipo'] != 'Producto terminado' %}
+        <form class="formulario" method="post" action="{{ url_for('inventarios.solicitar') }}">
+          <input type="hidden" name="articulo_id" value="{{ a['id'] }}">
+          <input type="number" name="cantidad" min="1" placeholder="Cantidad" style="width:110px;min-width:90px" required>
+          <button class="boton {% if not a['bajo'] %}secundario{% endif %} chico">Solicitar</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+<div class="tarjeta" id="solicitudes">
+  <h2>Solicitudes de reabastecimiento</h2>
+  <table>
+    <tr><th>Folio</th><th>Artículo</th><th class="derecha">Cantidad</th><th>Fecha</th><th>Solicitó</th><th>Estado</th></tr>
+    {% for s in solicitudes %}
+    <tr><td>{{ folio('SOL', s['id']) }}</td><td>{{ s['nombre'] }}</td><td class="derecha">{{ s['cantidad'] | numero }} {{ s['unidad'] }}</td>
+      <td>{{ s['fecha'] | fecha }}</td><td>{{ s['usuario'] }}</td><td><span class="{{ s['estado'] | clase_estado }}">{{ s['estado'] }}</span></td></tr>
+    {% else %}
+    <tr><td colspan="6" class="vacio">No hay solicitudes.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

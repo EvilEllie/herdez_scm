@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block titulo %}Usuarios y permisos{% endblock %}
+{% block contenido %}
+<div class="encabezado">
+  <div>
+    <h1>Usuarios y permisos</h1>
+  </div>
+</div>
+
+{% if puede('usuarios', 'registrar') %}
+<div class="tarjeta">
+  <h2>Nuevo usuario</h2>
+  <form method="post" action="{{ url_for('usuarios.nuevo') }}" class="formulario">
+    <div class="campo"><label>Nombre</label><input name="nombre" required></div>
+    <div class="campo"><label>Correo</label><input type="email" name="correo" required></div>
+    <div class="campo"><label>Rol</label>
+      <select name="rol" required>{% for clave in roles %}<option value="{{ clave }}">{{ roles[clave] }}</option>{% endfor %}</select></div>
+    <div class="campo"><label>Sede</label>
+      <select name="sede_id" required>{% for s in sedes %}<option value="{{ s['id'] }}">{{ s['nombre'] }}</option>{% endfor %}</select></div>
+    <div class="campo"><label>Contraseña inicial</label><input type="password" name="contrasena" minlength="6" required style="width:150px"></div>
+    <button class="boton">Crear usuario</button>
+  </form>
+</div>
+{% endif %}
+
+<div class="fila">
+  <div class="tarjeta" style="flex:2">
+    <h2>Usuarios registrados</h2>
+    <table>
+      <tr><th>Nombre</th><th>Rol</th><th>Sede</th><th>Estado</th><th></th></tr>
+      {% for u in usuarios %}
+      <tr>
+        <td><b>{{ u['nombre'] }}</b><br><span class="subtitulo">{{ u['correo'] }}</span></td>
+        <td>{{ roles[u['rol']] }}</td>
+        <td>{{ u['sede'] }}</td>
+        <td>
+          {% if u['bloqueado'] %}<span class="etiqueta roja">Bloqueado</span>
+          {% elif u['activo'] == 1 %}<span class="etiqueta verde">Activo</span>
+          {% else %}<span class="etiqueta gris">Inactivo</span>{% endif %}
+        </td>
+        <td class="derecha" style="white-space:nowrap">
+          {% if puede('usuarios', 'registrar') %}
+          <a class="boton secundario chico" href="{{ url_for('usuarios.editar', usuario_id=u['id']) }}">Editar</a>
+          {% if u['bloqueado'] %}
+          <form class="en-linea" method="post" action="{{ url_for('usuarios.desbloquear', usuario_id=u['id']) }}"><button class="boton secundario chico">Desbloquear</button></form>
+          {% endif %}
+          {% if u['id'] != usuario['id'] %}
+          <form class="en-linea" method="post" action="{{ url_for('usuarios.cambiar_activo', usuario_id=u['id']) }}">
+            <button class="boton {% if u['activo'] == 1 %}peligro{% else %}secundario{% endif %} chico">{% if u['activo'] == 1 %}Desactivar{% else %}Activar{% endif %}</button>
+          </form>
+          {% endif %}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="tarjeta" id="permisos">
+    <h2>Permisos por rol</h2>
+    <form method="get" class="formulario" style="margin-bottom:10px">
+      <select name="rol" onchange="this.form.submit()">
+        {% for clave in roles %}<option value="{{ clave }}" {% if clave == rol_elegido %}selected{% endif %}>{{ roles[clave] }}</option>{% endfor %}
+      </select>
+    </form>
+    <form method="post" action="{{ url_for('usuarios.guardar_permisos') }}">
+      <input type="hidden" name="rol" value="{{ rol_elegido }}">
+      <table>
+        <tr><th>Módulo</th><th>Consultar</th><th>Registrar</th></tr>
+        {% for m in modulos %}
+        {% set p = permisos.get(m['clave'], {'consultar': False, 'registrar': False}) %}
+        <tr>
+          <td>{{ m['nombre'] }}</td>
+          <td><input type="checkbox" name="c_{{ m['clave'] }}" {% if p['consultar'] %}checked{% endif %} style="min-width:0"></td>
+          <td><input type="checkbox" name="r_{{ m['clave'] }}" {% if p['registrar'] %}checked{% endif %} style="min-width:0"></td>
+        </tr>
+        {% endfor %}
+      </table>
+      {% if puede('usuarios', 'registrar') %}<p style="margin-top:12px;text-align:right"><button class="boton">Guardar permisos</button></p>{% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="tarjeta">
+  <h2>Bitácora de operaciones</h2>
+  <table>
+    <tr><th>Fecha y hora</th><th>Usuario</th><th>Operación</th><th>Tabla</th></tr>
+    {% for b in bitacora %}
+    <tr><td style="white-space:nowrap">{{ b['fecha_hora'] | fecha }} {{ b['fecha_hora'][11:16] }}</td><td>{{ b['nombre'] or '—' }}</td><td>{{ b['operacion'] }}</td><td>{{ b['tabla_afectada'] }}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}
