@@ -9,7 +9,7 @@ MYSQL_USUARIO = 'root'
 MYSQL_CONTRASENA = '123'
 MYSQL_BASE = 'herdez_scm'
 
-ARCHIVO_SQLITE = 'herdez_scm.db'
+ARCHIVO_SQLITE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'herdez_scm.db')
 
 CLAVE_SECRETA = os.environ.get('CLAVE_SECRETA', 'herdez-scm-prototipo-2026')
 
