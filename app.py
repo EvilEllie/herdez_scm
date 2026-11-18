@@ -1,5 +1,6 @@
 import datetime
 import importlib
+import os
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import check_password_hash
 import config
@@ -229,6 +230,7 @@ def preparar_base_de_datos():
     print('')
 
 
+preparar_base_de_datos()
+
 if __name__ == '__main__':
-    preparar_base_de_datos()
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)
